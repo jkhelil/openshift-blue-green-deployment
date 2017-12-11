@@ -1,0 +1,37 @@
+apiVersion: V1
+kind: ReplicationSet
+metadata:
+  name: blue
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      deployment: blue
+  templates:
+    metadata:
+      labels:
+        deployment: blue
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: workdir
+          mountPath: /usr/share/nginx/html
+      initContainers:
+      - name: install
+        image: busybox
+        command:
+        - wget
+        - "-O"
+        - "/work-dir/index.html"
+        - http://
+        volumeMounts:
+        - name: workdir
+          mountPath: "/work-dir"
+        dnsPolicy: Default
+        volumes:
+        - name: workdir
+          emptydir: {}
