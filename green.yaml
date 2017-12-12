@@ -1,16 +1,16 @@
-apiVersion: V1
-kind: ReplicationSet
+apiVersion: extensions/v1beta1
+kind: ReplicaSet
 metadata:
-  name: blue
+  name: green
 spec:
   replicas: 3
   selector:
     matchLabels:
-      deployment: blue
-  templates:
+      deployment: green
+  template:
     metadata:
       labels:
-        deployment: blue
+        deployment: green
     spec:
       containers:
       - name: nginx
@@ -27,11 +27,38 @@ spec:
         - wget
         - "-O"
         - "/work-dir/index.html"
-        - http://
+        - https://raw.githubusercontent.com/jkhelil/openshift-blue-green-deployment/master/green.html
         volumeMounts:
         - name: workdir
           mountPath: "/work-dir"
-        dnsPolicy: Default
-        volumes:
-        - name: workdir
-          emptydir: {}
+      dnsPolicy: Default
+      volumes:
+      - name: workdir
+        emptydir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: green-service
+spec:
+  ports:
+    - port: 8080
+      targetPort: 80
+  selector:
+    deployment: green
+---
+apiVersion: v1
+kind: Route
+metadata:
+  name: edge-route
+  annotations:
+    haproxy.router.openshift.io/balance: "roundrobin"
+spec:
+  host: "abtest.192.168.99.100.nip.io"
+  to:
+    kind: Service
+    name: green-service
+    weight: 100
+  tls:
+    termination: edge
+  

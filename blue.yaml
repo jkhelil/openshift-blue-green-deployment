@@ -1,5 +1,5 @@
-apiVersion: V1
-kind: ReplicationSet
+apiVersion: extensions/v1beta1
+kind: ReplicaSet
 metadata:
   name: blue
 spec:
@@ -7,7 +7,7 @@ spec:
   selector:
     matchLabels:
       deployment: blue
-  templates:
+  template:
     metadata:
       labels:
         deployment: blue
@@ -27,11 +27,24 @@ spec:
         - wget
         - "-O"
         - "/work-dir/index.html"
-        - http://
+        - https://raw.githubusercontent.com/jkhelil/openshift-blue-green-deployment/master/blue.html
         volumeMounts:
         - name: workdir
           mountPath: "/work-dir"
-        dnsPolicy: Default
-        volumes:
-        - name: workdir
-          emptydir: {}
+      dnsPolicy: Default
+      volumes:
+      - name: workdir
+        emptydir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: blue-service
+spec:
+  ports:
+    - port: 8080
+      targetPort: 80
+  selector:
+    deployment: blue
+
+  
